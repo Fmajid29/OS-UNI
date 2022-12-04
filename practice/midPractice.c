@@ -7,7 +7,6 @@
 
 int main(int argc, char* argv[]){
 
-
     int const SIZE = argc - 1;
     int arr[SIZE];
 
@@ -28,13 +27,14 @@ int main(int argc, char* argv[]){
         
         for (int i = 0; i < SIZE; i++){
             temp = array[i];
-            for (int j = i + 1; j < SIZE; j++){
+            for (int j = 1; j < SIZE; j++){
                 if (temp < array[j]){
                     array[j - 1] = array[j];
                     array[j] = temp;
                 }
             }
         }
+
         write(pipe1[1], array, sizeof(array));
     }
     else{
