@@ -1,5 +1,8 @@
 #include <stdio.h> 
 #include <stdlib.h> 
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <pthread.h> 
 
 #define MAX 10
@@ -43,7 +46,7 @@ void* descending_sort(void* arg)
 
     if (arr[0] > arr[MAX - 1])
         sum2 = arr[0] + arr[MAX - 1]; 
-        
+
     return 0; 
 } 
 
