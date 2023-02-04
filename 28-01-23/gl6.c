@@ -1,63 +1,57 @@
 #include <stdio.h>
 #include <pthread.h>
+#include <semaphore.h>
 
-int readers = 0; // number of readers currently in the critical section
-int writers = 0; 
-pthread_mutex_t lock;
-pthread_cond_t cond;
+sem_t mutex, writeblock;
+int data = 0, rcount = 0, wcount = 0;
 
-void* reader(void* arg) {
-    pthread_mutex_lock(&lock);
-    while (writers > 0) {
-        pthread_cond_wait(&cond, &lock);
+void *reader(void *arg)
+{
+    sem_wait(&mutex);
+    rcount++;
+    if(rcount==1 && wcount >= rcount)
+    {
+        sem_wait(&writeblock);
     }
-    readers++;
-    pthread_mutex_unlock(&lock);
-
-    // critical section - read data
-    printf("Reader is reading\n");
-
-    pthread_mutex_lock(&lock);
-    readers--;
-    pthread_cond_broadcast(&cond);
-    pthread_mutex_unlock(&lock);
+    sem_post(&mutex);
+    printf("Data read\n");
+    sem_wait(&mutex);
+    rcount--;
+    if(rcount==0)
+    {
+        sem_post(&writeblock);
+    }
+        sem_post(&mutex);
 }
 
-void* writer(void* arg) {
-    pthread_mutex_lock(&lock);
-    while (readers > 0 || writers > 0) {
-        pthread_cond_wait(&cond, &lock);
-    }
-    writers++;
-    pthread_mutex_unlock(&lock);
-
-    // critical section - write data
-    printf("Writer is writing\n");
-
-    pthread_mutex_lock(&lock);
-    writers--;
-    pthread_cond_broadcast(&cond);
-    pthread_mutex_unlock(&lock);
+void *writer(void *arg)
+{
+    sem_wait(&writeblock);
+    wcount++;
+    data++;
+    printf("Data writen\n");
+    sem_post(&writeblock);
 }
 
-int main() {
-    pthread_t r1, r2, r3, w1, w2;
-    pthread_mutex_init(&lock, NULL);
-    pthread_cond_init(&cond, NULL);
+int main()
+{
+    int i,b;
+    pthread_t rtid[5],wtid[7];
+    sem_init(&mutex,0,1);
+    sem_init(&writeblock,0,1);
 
-    pthread_create(&r1, NULL, reader, NULL);
-    pthread_create(&r2, NULL, reader, NULL);
-    pthread_create(&r3, NULL, reader, NULL);
-    pthread_create(&w1, NULL, writer, NULL);
-    pthread_create(&w2, NULL, writer, NULL);
+    for(i=0;i< 7;i++)
+    {
+        if (i < 5)
+            pthread_create(&rtid[i],NULL,reader,NULL);
+        pthread_create(&wtid[i],NULL,writer,NULL);
+    }
 
-    pthread_join(r1, NULL);
-    pthread_join(r2, NULL);
-    pthread_join(r3, NULL);
-    pthread_join(w1, NULL);
-    pthread_join(w2, NULL);
+    for(i=0;i<=2;i++)
+    {
+        pthread_join(wtid[i],NULL);
+        pthread_join(rtid[i],NULL);
+    }
 
-    pthread_mutex_destroy(&lock);
-    pthread_cond_destroy(&cond);
     return 0;
 }
