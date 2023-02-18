@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
 	   printf("<Number of chairs> <Client wait time>\n");
 	   exit(0);
    }
+   
    runTime = atoi(argv[1]);
    clients = atoi(argv[2]);
    num_chairs = atoi(argv[3]);
@@ -70,15 +71,16 @@ void *barber(void *param) {
       /* wait for mutex to access chair count (chair_mutex) */
 	  sem_wait(&chairs_mutex);
       /* increment number of chairs available */
-      if (num_chairs == 0){
+      if (num_chairs < num_barber){
          sem_wait(&chairs_sleeping);
       }
 	  num_chairs += 1;
+           if (num_chairs > num_barber){
      sem_post(&chairs_sleeping);
+      }
 	  printf("Barber: Taking a client. Number of chairs available = %d\n",num_chairs);
       /* signal to client that barber is ready to cut their hair (sem_barber) */
 	  sem_post(&sem_barber);
-     if ()
       /* give up lock on chair count */
 	  sem_post(&chairs_mutex);
       /* generate random number, worktime, from 1-4 seconds for length of haircut.  */
